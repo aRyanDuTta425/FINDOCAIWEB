@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents Document[]
+
+  @@map("users")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  filename    String
+  originalName String
+  fileUrl     String
+  fileType    String
+  fileSize    Int
+  uploadedAt  DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  ocrData     OCRData?
+  analysisResult AnalysisResult?
+
+  @@map("documents")
+}
+
+model OCRData {
+  id         String   @id @default(cuid())
+  text       String
+  confidence Float?
+  processedAt DateTime @default(now())
+  
+  documentId String   @unique
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("ocr_data")
+}
+
+model AnalysisResult {
+  id          String   @id @default(cuid())
+  documentType String  // "invoice", "bank_statement", "tax_document", "other"
+  
+  // Invoice fields
+  invoiceNumber String?
+  amount        Float?
+  dueDate       DateTime?
+  vendor        String?
+  
+  // Bank statement fields
+  accountNumber String?
+  balance       Float?
+  statementDate DateTime?
+  
+  // Tax document fields
+  taxYear       Int?
+  taxType       String?
+  
+  // General fields
+  extractedData Json?
+  summary       String?
+  confidence    Float?
+  processedAt   DateTime @default(now())
+  
+  documentId    String   @unique
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("analysis_results")
+}

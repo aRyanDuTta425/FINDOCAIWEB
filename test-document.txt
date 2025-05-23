@@ -1,0 +1,8 @@
+TEST FINANCIAL DOCUMENT
+
+Invoice #: 12345
+Date: May 23, 2025
+Amount: $1,234.56
+
+From: Test Company Inc.
+To: Client LLC
