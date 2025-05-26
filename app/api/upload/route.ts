@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadToCloudinary } from '@/lib/cloudinary'
-import formidable from 'formidable'
-import { promises as fs } from 'fs'
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
 
 export async function POST(request: NextRequest) {
   try {

@@ -5,17 +5,74 @@ let Tesseract: any = null;
 async function getTesseract() {
   if (Tesseract === null) {
     if (typeof window === 'undefined') {
-      // Server-side - use stub implementation for OCR
-      // Later we'll handle this with a proper server-side solution
-      console.log('Running in server environment, using stub OCR');
+      // Server-side - use node-tesseract-ocr for server processing
+      console.log('Running in server environment, using node-tesseract-ocr');
+      const tesseractOcr = await import('node-tesseract-ocr');
+      
       Tesseract = {
-        recognize: async () => ({
-          data: {
-            text: '[OCR text will be processed in browser]',
-            confidence: 0,
-            words: []
+        recognize: async (imageData: any, lang = 'eng', options = {}) => {
+          try {
+            let imagePath: string;
+            
+            // Handle different input types
+            if (typeof imageData === 'string') {
+              // If it's already a path or URL
+              imagePath = imageData;
+            } else if (imageData instanceof Buffer) {
+              // Write buffer to temporary file
+              const fs = await import('fs');
+              const path = await import('path');
+              const os = await import('os');
+              
+              const tempPath = path.join(os.tmpdir(), `ocr_${Date.now()}.png`);
+              fs.writeFileSync(tempPath, imageData);
+              imagePath = tempPath;
+              
+              // Clean up function
+              const cleanup = () => {
+                try {
+                  fs.unlinkSync(tempPath);
+                } catch (e) {
+                  console.warn('Failed to clean up temporary file:', e);
+                }
+              };
+              
+              // Schedule cleanup
+              setTimeout(cleanup, 5000); // Clean up after 5 seconds
+            } else {
+              throw new Error('Unsupported image data type for server-side OCR');
+            }
+            
+            console.log('Running Tesseract OCR on:', imagePath);
+            const text = await tesseractOcr.default.recognize(imagePath, {
+              lang: lang,
+              oem: 1,
+              psm: 3,
+            });
+            
+            const cleanText = text.trim();
+            const confidence = cleanText.length > 10 ? 85 : 50; // Better confidence estimation
+            
+            console.log(`Server OCR completed: ${cleanText.length} chars, confidence: ${confidence}%`);
+            
+            return {
+              data: {
+                text: cleanText,
+                confidence: confidence,
+                words: []
+              }
+            };
+          } catch (error) {
+            console.error('Server-side OCR failed:', error);
+            return {
+              data: {
+                text: 'OCR processing failed on server. Please try uploading a clearer image.',
+                confidence: 0,
+                words: []
+              }
+            };
           }
-        })
+        }
       };
     } else {
       // Client-side - dynamically import Tesseract
@@ -67,15 +124,48 @@ export interface OCRResult {
 /**
  * Perform OCR on an image file
  */
-export async function performOCR(file: File | string): Promise<OCRResult> {
+export async function performOCR(file: File | string | Buffer): Promise<OCRResult> {
   try {
-    console.log('Starting OCR processing...');
+    console.log('Starting OCR processing...', typeof file, file instanceof File ? file.name : file);
     
     // Get Tesseract instance
     const Tesseract = await getTesseract();
     
+    let inputData: File | string | Buffer = file;
+    
+    // If running on server and input is a URL, download it first
+    if (typeof window === 'undefined' && typeof file === 'string' && file.startsWith('http')) {
+      console.log('Server-side: Downloading image from URL:', file);
+      const sharp = await import('sharp');
+      
+      try {
+        const response = await fetch(file);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+        
+        const imageBuffer = Buffer.from(await response.arrayBuffer());
+        
+        // Convert to PNG for better OCR compatibility
+        const processedBuffer = await sharp.default(imageBuffer)
+          .png()
+          .resize(null, 1200, { 
+            withoutEnlargement: true,
+            fit: 'inside'
+          })
+          .sharpen()
+          .toBuffer();
+        
+        inputData = processedBuffer;
+        console.log('Server-side: Image downloaded and processed');
+      } catch (fetchError) {
+        console.error('Failed to download image:', fetchError);
+        throw new Error('Failed to download image for OCR processing');
+      }
+    }
+    
     const result = await Tesseract.recognize(
-      file,
+      inputData,
       'eng',
       {
         logger: (m: { status: string; progress: number }) => {
@@ -105,6 +195,7 @@ export async function performOCR(file: File | string): Promise<OCRResult> {
     };
 
     console.log(`OCR completed with confidence: ${ocrResult.confidence}%`);
+    console.log(`Extracted text length: ${ocrResult.text.length} characters`);
     return ocrResult;
 
   } catch (error) {
@@ -233,7 +324,7 @@ export async function performOCROnPDF(file: File | Buffer | string): Promise<OCR
           imageSource,
           'eng',
           {
-            logger: (m) => {
+            logger: (m: { status: string; progress: number }) => {
               if (m.status === 'recognizing text') {
                 console.log(`Page ${pageNum} OCR Progress: ${Math.round(m.progress * 100)}%`);
               }
@@ -241,7 +332,7 @@ export async function performOCROnPDF(file: File | Buffer | string): Promise<OCR
           }
         );
 
-        const words = result.data.words?.map(word => ({
+        const words = result.data.words?.map((word: any) => ({
           text: word.text,
           confidence: word.confidence,
           bbox: {

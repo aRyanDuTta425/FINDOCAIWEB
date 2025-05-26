@@ -40,17 +40,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include'
       })
 
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
-      } else {
+      } else if (response.status === 401) {
+        // Only remove token on 401 Unauthorized
+        console.log('Token expired or invalid, logging out')
         Cookies.remove('token')
+        setUser(null)
+      } else {
+        // For other errors, don't log out immediately
+        console.warn('Auth check failed with status:', response.status)
       }
     } catch (error) {
       console.error('Auth check failed:', error)
-      Cookies.remove('token')
+      // Only remove token if it's a definitive auth failure
+      // Network errors shouldn't log users out
     } finally {
       setLoading(false)
     }

@@ -149,13 +149,22 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-secondary-900">Document Dashboard</h1>
               <p className="text-secondary-600">Manage and analyze your financial documents</p>
             </div>
-            <button
-              onClick={() => setShowUpload(true)}
-              className="btn-primary flex items-center"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Document
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => router.push('/dashboard/financial')}
+                className="btn-secondary flex items-center"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                Financial Dashboard
+              </button>
+              <button
+                onClick={() => setShowUpload(true)}
+                className="btn-primary flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Upload Document
+              </button>
+            </div>
           </div>
 
           {/* Search and Filter */}
