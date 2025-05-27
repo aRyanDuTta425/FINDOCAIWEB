@@ -19,30 +19,72 @@ export async function GET(request: NextRequest) {
       orderBy: { uploadedAt: 'desc' },
     })
 
-    // Calculate financial summary
+    // Calculate financial summary with improved data extraction
     let totalIncome = 0
     let totalExpenses = 0
     const expenseCategories: { [key: string]: number } = {}
     
+    // Debug: Log documents found and their analysis results
+    console.log(`Processing ${documents.length} documents for financial analysis`)
+    
     // Process analysis results to extract financial data
     documents.forEach(doc => {
+      console.log(`Processing document: ${doc.originalName}`, {
+        hasAnalysisResult: !!doc.analysisResult,
+        analysisResult: doc.analysisResult ? {
+          amount: doc.analysisResult.amount,
+          balance: doc.analysisResult.balance,
+          documentType: doc.analysisResult.documentType,
+          vendor: doc.analysisResult.vendor
+        } : null
+      })
+      
       if (doc.analysisResult) {
-        const { amount, documentType } = doc.analysisResult
+        let amount = 0
         
-        if (amount && amount > 0) {
+        // Try to extract amount from multiple sources
+        if (doc.analysisResult.amount && doc.analysisResult.amount > 0) {
+          amount = doc.analysisResult.amount
+        } else if (doc.analysisResult.balance && doc.analysisResult.balance > 0) {
+          amount = doc.analysisResult.balance
+        } else if (doc.analysisResult.extractedData) {
+          // Try to extract from JSON data
+          const extractedData = doc.analysisResult.extractedData as any
+          if (extractedData.total_amount) {
+            amount = parseFloat(extractedData.total_amount.toString())
+          } else if (extractedData.amount) {
+            amount = parseFloat(extractedData.amount.toString())
+          } else if (extractedData.balance) {
+            amount = parseFloat(extractedData.balance.toString())
+          }
+        }
+
+        console.log(`Extracted amount: ${amount} from document: ${doc.originalName}`)
+
+        if (amount > 0) {
+          const { documentType } = doc.analysisResult
+          
           if (documentType === 'bank_statement') {
             // For bank statements, consider positive amounts as income
             totalIncome += amount
-          } else if (documentType === 'invoice') {
-            // For invoices, consider as expenses
+          } else if (documentType === 'invoice' || !documentType || documentType === 'other') {
+            // For invoices and unknown types, consider as expenses
             totalExpenses += amount
             
             // Categorize expenses (simplified categorization)
-            const category = categorizeExpense(doc.analysisResult.vendor || 'Other')
+            const category = categorizeExpense(doc.analysisResult.vendor || doc.filename || 'Other')
             expenseCategories[category] = (expenseCategories[category] || 0) + amount
           }
         }
       }
+    })
+    
+    console.log(`Financial calculation results:`, {
+      totalIncome,
+      totalExpenses,
+      expenseCategories,
+      documentsProcessed: documents.length,
+      documentsWithAnalysis: documents.filter(d => d.analysisResult).length
     })
 
     const netSavings = totalIncome - totalExpenses

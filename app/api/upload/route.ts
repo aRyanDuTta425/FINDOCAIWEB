@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import { ragService } from '@/lib/rag-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +75,12 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    })
+
+    // Trigger embedding creation in the background
+    // We don't await this to avoid slowing down the upload response
+    ragService.embedDocument(document.id).catch(error => {
+      console.error('Failed to generate embeddings for document:', document.id, error)
     })
 
     return NextResponse.json({

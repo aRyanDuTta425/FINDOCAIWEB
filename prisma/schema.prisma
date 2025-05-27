@@ -18,7 +18,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  documents Document[]
+  documents     Document[]
+  conversations ChatConversation[]
 
   @@map("users")
 }
@@ -35,8 +36,9 @@ model Document {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  ocrData     OCRData?
+  ocrData        OCRData?
   analysisResult AnalysisResult?
+  embeddings     DocumentEmbedding[]
 
   @@map("documents")
 }
@@ -80,6 +82,52 @@ model AnalysisResult {
   
   documentId    String   @unique
   document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  embeddings    DocumentEmbedding[]
 
   @@map("analysis_results")
+}
+
+model DocumentEmbedding {
+  id          String   @id @default(cuid())
+  content     String   // Text chunk that was embedded
+  embedding   Float[]  // Vector embedding
+  chunkIndex  Int      // Position of this chunk in the document
+  metadata    Json?    // Additional metadata about the chunk
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  documentId       String
+  document         Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  analysisResultId String?
+  analysisResult   AnalysisResult? @relation(fields: [analysisResultId], references: [id], onDelete: Cascade)
+
+  @@map("document_embeddings")
+}
+
+model ChatConversation {
+  id        String   @id @default(cuid())
+  title     String?  // Auto-generated or user-provided title
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  messages  ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  role      String   // "user" or "assistant"
+  metadata  Json?    // Store citations, sources, etc.
+  createdAt DateTime @default(now())
+  
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
 }

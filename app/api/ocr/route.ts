@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { performOCR, performOCROnPDF } from '@/lib/ocr'
+import { ragService } from '@/lib/rag-service'
 
 // Add GET endpoint to retrieve OCR data
 export async function GET(request: NextRequest) {
@@ -156,6 +157,11 @@ export async function POST(request: NextRequest) {
         text: combinedText,
         confidence: averageConfidence,
       }
+    })
+
+    // Trigger embedding regeneration in the background after OCR completion
+    ragService.embedDocument(documentId).catch(error => {
+      console.error('Failed to regenerate embeddings after OCR for document:', documentId, error)
     })
 
     return NextResponse.json({

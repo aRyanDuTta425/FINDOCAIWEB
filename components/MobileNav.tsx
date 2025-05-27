@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { 
   Menu, 
   X, 
@@ -9,7 +10,8 @@ import {
   FileText, 
   Settings,
   LogOut,
-  User
+  User,
+  MessageCircle
 } from 'lucide-react'
 
 interface MobileNavProps {
@@ -25,6 +27,7 @@ export default function MobileNav({ currentPage, userName, onLogout }: MobileNav
     { name: 'Dashboard', href: '/dashboard', icon: Home, current: currentPage === 'dashboard' },
     { name: 'Financial', href: '/dashboard/financial', icon: BarChart3, current: currentPage === 'financial' },
     { name: 'Documents', href: '/dashboard/documents', icon: FileText, current: currentPage === 'documents' },
+    { name: 'Chat', href: '/chat', icon: MessageCircle, current: currentPage === 'chat' },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings, current: currentPage === 'settings' },
   ]
 
@@ -77,7 +80,7 @@ export default function MobileNav({ currentPage, userName, onLogout }: MobileNav
                 {navigation.map((item) => {
                   const Icon = item.icon
                   return (
-                    <a
+                    <Link
                       key={item.name}
                       href={item.href}
                       className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -91,7 +94,7 @@ export default function MobileNav({ currentPage, userName, onLogout }: MobileNav
                         item.current ? 'text-blue-500' : 'text-gray-400'
                       }`} />
                       {item.name}
-                    </a>
+                    </Link>
                   )
                 })}
               </nav>

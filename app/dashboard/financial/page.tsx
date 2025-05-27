@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { 
@@ -15,6 +16,7 @@ import {
 
 // Import dashboard components
 import FinancialSummaryCards from '@/components/dashboard/FinancialSummaryCards'
+import EnhancedFinancialSummary from '@/components/dashboard/EnhancedFinancialSummary'
 import ExpenseCategoryChart from '@/components/dashboard/ExpenseCategoryChart'
 import MonthlyTrendChart from '@/components/dashboard/MonthlyTrendChart'
 import TransactionTable from '@/components/dashboard/EnhancedTransactionTable'
@@ -22,8 +24,11 @@ import EditableOCRPanel from '@/components/dashboard/EditableOCRPanel'
 import RecommendationsSection from '@/components/dashboard/RecommendationsSection'
 import TransactionModal from '@/components/dashboard/TransactionModal'
 import ExportPanel from '@/components/dashboard/ExportPanel'
+import EmbeddingManager from '@/components/dashboard/EmbeddingManager'
 import NotificationSystem, { useNotifications } from '@/components/dashboard/NotificationSystem'
 import { FullDashboardSkeleton } from '@/components/dashboard/LoadingSkeletons'
+import { EnhancedDashboardSkeleton, AnimatedPageTransition, AnimatedButton } from '@/components/ui/AnimatedComponents'
+import { DocumentSelector } from '@/components/dashboard/DocumentSelector'
 import MobileNav from '@/components/MobileNav'
 import RetryWrapper from '@/components/RetryWrapper'
 import { useAppStability } from '@/hooks/useAppStability'
@@ -40,6 +45,8 @@ interface FinancialData {
       expenses: number
       savings: number
     }
+    documentsCount?: number
+    documentsWithData?: number
   }
   expenseCategories: Array<{
     name: string
@@ -55,12 +62,15 @@ interface FinancialData {
   }>
   transactions: Array<{
     id: string
+    documentId?: string
     date: string
     description: string
     category: string
     amount: number
     type: 'income' | 'expense'
     source?: string
+    filename?: string
+    documentType?: string
   }>
   recommendations: Array<{
     id: string
@@ -70,6 +80,19 @@ interface FinancialData {
     action?: string
     priority: 'high' | 'medium' | 'low'
   }>
+  documents?: Array<{
+    id: string
+    filename: string
+    uploadedAt: string
+    hasAnalysisResult: boolean
+    documentType?: string
+    amount: number
+  }>
+  debug?: {
+    totalDocuments: number
+    documentsWithAnalysis: number
+    documentsWithAmount: number
+  }
 }
 
 interface OCRData {
@@ -93,6 +116,7 @@ export default function FinancialDashboard() {
   const [ocrData, setOcrData] = useState<OCRData[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   
   // Transaction modal state
   const [transactionModal, setTransactionModal] = useState<{
@@ -114,16 +138,34 @@ export default function FinancialDashboard() {
     if (user) {
       loadDashboardData()
     }
-  }, [user])
+  }, [user, selectedDocumentId]) // Re-load data when document selection changes
 
   const loadDashboardData = async () => {
     try {
       setLoadingData(true)
       
+      // Build API URL with document filter if selected
+      const apiUrl = selectedDocumentId 
+        ? `/api/dashboard/financial-by-document?documentId=${selectedDocumentId}`
+        : '/api/dashboard/financial-by-document'
+      
       // Load financial data using the authenticated API utility
       try {
-        const financialData = await apiCall('/api/dashboard/financial')
+        const financialData = await apiCall(apiUrl)
         setFinancialData(financialData)
+        
+        // Show debug info if available
+        if (financialData.debug) {
+          console.log('Financial Data Debug:', financialData.debug)
+          if (financialData.debug.documentsWithAmount === 0 && financialData.debug.totalDocuments > 0) {
+            addNotification({
+              type: 'warning',
+              title: 'No financial data found',
+              message: `Found ${financialData.debug.totalDocuments} documents but none contain extractable financial amounts. Please ensure your documents contain clear financial information.`,
+              duration: 8000
+            })
+          }
+        }
       } catch (error) {
         console.error('Failed to load financial data:', error)
         addNotification({
@@ -324,17 +366,18 @@ export default function FinancialDashboard() {
   }
 
   if (loading || loadingData) {
-    return <FullDashboardSkeleton />
+    return <EnhancedDashboardSkeleton />
   }
 
   return (
     <RetryWrapper onRetry={loadDashboardData}>
-      <div className="min-h-screen bg-secondary-50">
-        {/* Notification System */}
-        <NotificationSystem 
-          notifications={notifications} 
-          onRemove={removeNotification} 
-        />
+      <AnimatedPageTransition>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+          {/* Notification System */}
+          <NotificationSystem 
+            notifications={notifications} 
+            onRemove={removeNotification} 
+          />
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-secondary-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -343,29 +386,31 @@ export default function FinancialDashboard() {
               <FileText className="h-8 w-8 text-primary-600" />
               <span className="ml-2 text-xl font-bold text-secondary-900">FinDocAI</span>
               <nav className="hidden md:flex ml-8 space-x-6">
-                <a href="/dashboard" className="text-primary-600 font-medium">Dashboard</a>
-                <a href="/dashboard/documents" className="text-secondary-600 hover:text-secondary-900">Documents</a>
+                <Link href="/dashboard" className="text-primary-600 font-medium">Dashboard</Link>
+                <Link href="/dashboard/documents" className="text-secondary-600 hover:text-secondary-900">Documents</Link>
+                <Link href="/chat" className="text-secondary-600 hover:text-secondary-900">Chat</Link>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <button
+              <AnimatedButton
                 onClick={handleRefresh}
-                className="text-secondary-400 hover:text-secondary-600 transition-colors"
                 disabled={refreshing}
-                title="Refresh data"
+                variant="outline"
+                className="p-2"
               >
                 <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
+              </AnimatedButton>
               <span className="hidden sm:inline text-sm text-secondary-600">
                 Welcome, {user?.name || user?.email}
               </span>
-              <button
+              <AnimatedButton
                 onClick={logout}
-                className="hidden md:flex items-center btn-outline"
+                variant="outline"
+                className="hidden md:flex items-center px-4 py-2"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
-              </button>
+              </AnimatedButton>
               <MobileNav 
                 currentPage="financial" 
                 userName={user?.name || user?.email}
@@ -385,14 +430,53 @@ export default function FinancialDashboard() {
           </p>
         </div>
 
+        {/* Document Selector */}
+        {financialData?.documents && financialData.documents.length > 0 && (
+          <div className="mb-8">
+            <DocumentSelector
+              documents={financialData.documents}
+              selectedDocumentId={selectedDocumentId || undefined}
+              onDocumentSelect={setSelectedDocumentId}
+            />
+          </div>
+        )}
+
+        {/* Debug Info */}
+        {financialData?.debug && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-medium text-blue-900 mb-2">📊 Data Summary</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="text-blue-700">Total Documents:</span>
+                <span className="ml-2 font-medium">{financialData.debug.totalDocuments}</span>
+              </div>
+              <div>
+                <span className="text-blue-700">With Analysis:</span>
+                <span className="ml-2 font-medium">{financialData.debug.documentsWithAnalysis}</span>
+              </div>
+              <div>
+                <span className="text-blue-700">With Financial Data:</span>
+                <span className="ml-2 font-medium">{financialData.debug.documentsWithAmount}</span>
+              </div>
+            </div>
+            {selectedDocumentId && (
+              <div className="mt-2 text-xs text-blue-600">
+                Showing data for selected document only
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Financial Summary Cards */}
-        <FinancialSummaryCards 
+        <EnhancedFinancialSummary 
           data={financialData?.summary || {
             healthScore: 0,
             totalIncome: 0,
             totalExpenses: 0,
             netSavings: 0,
-            monthlyChange: { income: 0, expenses: 0, savings: 0 }
+            monthlyChange: { income: 0, expenses: 0, savings: 0 },
+            documentsCount: financialData?.documents?.length || 0,
+            documentsWithData: financialData?.debug?.documentsWithAmount || 0
           }}
           loading={loadingData}
         />
@@ -458,6 +542,11 @@ export default function FinancialDashboard() {
             }} />
           )}
         </div>
+
+        {/* Embedding Management Section */}
+        <div className="mb-8">
+          <EmbeddingManager />
+        </div>
       </div>
 
       {/* Transaction Modal */}
@@ -469,6 +558,7 @@ export default function FinancialDashboard() {
         onSave={handleSaveTransaction}
       />
       </div>
+      </AnimatedPageTransition>
     </RetryWrapper>
   )
 }
