@@ -7,7 +7,7 @@ A full-stack AI-powered financial document processing and analysis platform buil
 - **🔐 Secure Authentication**: JWT-based user authentication with bcrypt password hashing
 - **☁️ Cloud File Upload**: Drag-and-drop file upload with Cloudinary integration
 - **📄 OCR Processing**: Extract text from images and PDFs using Tesseract.js
-- **🧠 AI Analysis**: Intelligent document analysis using Gemini API for:
+- **🧠 AI Analysis**: Intelligent document analysis using Groq API for:
   - Invoice extraction (amount, due date, vendor, etc.)
   - Bank statement parsing (transactions, balances)
   - Tax document categorization
@@ -34,7 +34,7 @@ A full-stack AI-powered financial document processing and analysis platform buil
 
 ### AI & Cloud Services
 - **Tesseract.js** - OCR text extraction
-- **Gemini API** - AI document analysis
+- **Groq API** - AI document analysis
 - **Cloudinary** - File storage and management
 
 ## 📦 Installation
@@ -68,8 +68,8 @@ A full-stack AI-powered financial document processing and analysis platform buil
    CLOUDINARY_API_KEY="your-cloudinary-api-key"
    CLOUDINARY_API_SECRET="your-cloudinary-api-secret"
    
-   # Gemini API
-   GEMINI_API_KEY="your-gemini-api-key"
+   # Groq API
+   GROQ_API_KEY="your-groq-api-key"
    ```
 
 4. **Set up the database**
@@ -109,9 +109,9 @@ The application uses the following main models:
 2. Get your cloud name, API key, and API secret from the dashboard
 3. Update the Cloudinary variables in `.env.local`
 
-### Gemini API Setup
-1. Get a Gemini API key from Google AI Studio
-2. Update `GEMINI_API_KEY` in `.env.local`
+### Groq API Setup
+1. Get a Groq API key from Groq Console (https://console.groq.com/)
+2. Update `GROQ_API_KEY` in `.env.local`
 3. (Optional) The app includes a mock implementation if you don't have an API key
 
 ## 📱 Usage

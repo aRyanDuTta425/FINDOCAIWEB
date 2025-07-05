@@ -1,9 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY!,
+});
 
 export interface EmbeddingChunk {
   content: string;
@@ -34,19 +36,29 @@ export interface SearchResult {
 }
 
 export class RAGService {
-  private model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-
   /**
-   * Generate embeddings for text content using Gemini
+   * Generate embeddings using a simple hash-based approach
+   * Note: Groq doesn't provide embeddings API, so we use a simple similarity approach
+   * For production, consider using OpenAI, Cohere, or Hugging Face embeddings
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    try {
-      const result = await this.model.embedContent(text);
-      return result.embedding.values;
-    } catch (error) {
-      console.error('Error generating embedding:', error);
-      throw new Error('Failed to generate embedding');
+    // Simple hash-based embedding for demonstration
+    const words = text.toLowerCase().split(/\s+/);
+    const embedding = new Array(384).fill(0);
+    
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      for (let j = 0; j < word.length; j++) {
+        const charCode = word.charCodeAt(j);
+        embedding[j % 384] += charCode / (i + 1);
+      }
     }
+    
+    // Normalize the embedding
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    if (magnitude === 0) return embedding;
+    
+    return embedding.map(val => val / magnitude);
   }
 
   /**
@@ -121,8 +133,8 @@ export class RAGService {
           structuredData.push({
             text: invoiceText,
             metadata: {
-              vendor: analysis.vendor,
-              amount: analysis.amount,
+              vendor: analysis.vendor || undefined,
+              amount: analysis.amount || undefined,
               date: analysis.dueDate?.toISOString(),
             },
           });
@@ -131,7 +143,7 @@ export class RAGService {
           structuredData.push({
             text: bankText,
             metadata: {
-              amount: analysis.balance,
+              amount: analysis.balance || undefined,
               date: analysis.statementDate?.toISOString(),
             },
           });

@@ -1,3 +1,9 @@
+import Groq from 'groq-sdk';
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY!,
+});
+
 export interface AnalysisResult {
   documentType: string
   invoiceNumber?: string
@@ -218,26 +224,33 @@ export const analyzeDocument = async (ocrText: string, filename: string): Promis
     const documentType = determineDocumentType(ocrText, filename)
     console.log(`Determined document type: ${documentType}`)
     
-    // Try to use Gemini API
+    // Try to use Groq API
     try {
-      // Dynamic import to avoid worker issues
-      const { GoogleGenerativeAI } = await import('@google/generative-ai')
-      
-      if (process.env.GEMINI_API_KEY) {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        console.log('Successfully initialized Gemini AI')
-        
-        // Use real Gemini API for analysis
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+      if (process.env.GROQ_API_KEY) {
+        console.log('Using Groq API for document analysis')
         
         // Build the prompt based on document type
         const prompt = buildPromptForDocType(ocrText, documentType)
         
-        console.log('Sending prompt to Gemini API')
-        const result = await model.generateContent(prompt)
-        const response = await result.response
-        const responseText = response.text()
-        console.log('Received response from Gemini API')
+        console.log('Sending prompt to Groq API')
+        const completion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert financial document analyzer. Extract information from financial documents and return valid JSON responses only.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          model: 'llama-3.1-70b-versatile',
+          temperature: 0.1, // Low temperature for more consistent structured output
+          max_tokens: 2048,
+        });
+        
+        const responseText = completion.choices[0]?.message?.content || '';
+        console.log('Received response from Groq API')
         
         // Try to parse JSON from the response
         try {
@@ -246,7 +259,7 @@ export const analyzeDocument = async (ocrText: string, filename: string): Promis
                           responseText.match(/\{[\s\S]*\}/)
           const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : responseText
           const parsedResponse = JSON.parse(jsonStr.replace(/```/g, '').trim())
-          console.log('Successfully parsed Gemini response as JSON')
+          console.log('Successfully parsed Groq response as JSON')
           
           // Format the response into our expected structure
           return {
@@ -261,18 +274,18 @@ export const analyzeDocument = async (ocrText: string, filename: string): Promis
             taxYear: parsedResponse.taxYear ? parseInt(parsedResponse.taxYear.toString()) : undefined,
             taxType: parsedResponse.taxType,
             extractedData: parsedResponse.extractedData || parsedResponse.transactions || parsedResponse,
-            summary: parsedResponse.summary || `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} processed with Gemini AI`,
+            summary: parsedResponse.summary || `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} processed with Groq AI`,
             confidence: parsedResponse.confidence || 0.9,
           }
         } catch (parseError) {
-          console.error('Failed to parse Gemini response as JSON:', parseError)
+          console.error('Failed to parse Groq response as JSON:', parseError)
           console.log('Raw response:', responseText)
         }
       } else {
-        console.log('No Gemini API key found, using fallback analysis')
+        console.log('No Groq API key found, using fallback analysis')
       }
-    } catch (importError) {
-      console.error('Failed to use Gemini API:', importError)
+    } catch (apiError) {
+      console.error('Failed to use Groq API:', apiError)
     }
     
     // If we reach here, either the API call failed or the response parsing failed

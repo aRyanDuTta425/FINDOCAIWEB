@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, DollarSign, Target, AlertCircle, Activity } from 'lucide-react'
 
 interface EnhancedFinancialSummaryProps {
@@ -17,6 +18,70 @@ interface EnhancedFinancialSummaryProps {
     documentsWithData?: number
   }
   loading?: boolean
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+}
+
+const cardVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 20,
+    scale: 0.95
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12
+    }
+  },
+  hover: {
+    y: -2,
+    scale: 1.02,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 10
+    }
+  }
+}
+
+const progressVariants = {
+  hidden: { width: 0 },
+  visible: (width: number) => ({
+    width: `${width}%`,
+    transition: {
+      duration: 1.5,
+      ease: "easeOut",
+      delay: 0.5
+    }
+  })
+}
+
+const numberVariants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 15,
+      delay: 0.3
+    }
+  }
 }
 
 export default function EnhancedFinancialSummary({ data, loading = false }: EnhancedFinancialSummaryProps) {
@@ -111,11 +176,18 @@ export default function EnhancedFinancialSummary({ data, loading = false }: Enha
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+    >
       {cards.map((card, index) => (
-        <div
+        <motion.div
           key={card.title}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer relative overflow-hidden hover:shadow-md transition-shadow"
+          variants={cardVariants}
+          whileHover="hover"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer relative overflow-hidden"
         >
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -125,27 +197,36 @@ export default function EnhancedFinancialSummary({ data, loading = false }: Enha
           <div className="relative z-10">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
+              <motion.div
+                className={`p-2 rounded-lg ${card.bgColor}`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <card.icon className={`h-5 w-5 ${card.color}`} />
-              </div>
+              </motion.div>
               {card.trend !== null && (
-                <div className={`flex items-center text-sm font-medium ${
-                  card.trend >= 0 ? 'text-emerald-600' : 'text-red-600'
-                }`}>
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className={`flex items-center text-sm font-medium ${
+                    card.trend >= 0 ? 'text-emerald-600' : 'text-red-600'
+                  }`}
+                >
                   {card.trend >= 0 ? (
                     <TrendingUp className="h-4 w-4 mr-1" />
                   ) : (
                     <TrendingDown className="h-4 w-4 mr-1" />
                   )}
                   {formatChange(card.trend)}
-                </div>
+                </motion.div>
               )}
             </div>
 
             {/* Value */}
-            <div className="mb-2">
+            <motion.div variants={numberVariants} className="mb-2">
               <h3 className="text-2xl font-bold text-gray-900">{card.value}</h3>
-            </div>
+            </motion.div>
 
             {/* Subtitle */}
             <p className="text-sm text-gray-600 mb-4">{card.subtitle}</p>
@@ -154,9 +235,12 @@ export default function EnhancedFinancialSummary({ data, loading = false }: Enha
             {card.progress !== null && (
               <div className="relative">
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    style={{ width: `${card.progress}%` }}
-                    className={`h-2 rounded-full transition-all duration-1000 ${
+                  <motion.div
+                    custom={card.progress}
+                    variants={progressVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className={`h-2 rounded-full ${
                       card.title === "Financial Health"
                         ? data.healthScore >= 80
                           ? 'bg-emerald-500'
@@ -175,17 +259,24 @@ export default function EnhancedFinancialSummary({ data, loading = false }: Enha
               {card.title}
             </p>
           </div>
-        </div>
+        </motion.div>
       ))}
 
       {/* Additional Info Card */}
       {(data.documentsCount !== undefined || data.documentsWithData !== undefined) && (
-        <div className="md:col-span-2 lg:col-span-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
+        <motion.div
+          variants={cardVariants}
+          whileHover="hover"
+          className="md:col-span-2 lg:col-span-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <motion.div
+                className="p-2 bg-blue-100 rounded-lg"
+                whileHover={{ scale: 1.1 }}
+              >
                 <DollarSign className="h-5 w-5 text-blue-600" />
-              </div>
+              </motion.div>
               <div>
                 <h4 className="font-semibold text-gray-900">Data Summary</h4>
                 <p className="text-sm text-gray-600">
@@ -194,14 +285,18 @@ export default function EnhancedFinancialSummary({ data, loading = false }: Enha
               </div>
             </div>
             {data.documentsWithData === 0 && data.documentsCount && data.documentsCount > 0 && (
-              <div className="flex items-center text-amber-600">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center text-amber-600"
+              >
                 <AlertCircle className="h-5 w-5 mr-2" />
                 <span className="text-sm font-medium">No financial data extracted</span>
-              </div>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { performOCR, performOCROnPDF } from '@/lib/ocr'
-import { analyzeDocument } from '@/lib/gemini'
+import { analyzeDocument } from '@/lib/document-analysis'
 
 /**
  * Batch processes a document for both OCR and analysis in one request
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!analysisResult) {
-      // Perform analysis using Gemini API
+      // Perform analysis using Groq API
       const analysis = await analyzeDocument(
         ocrData.text,
         document.originalName

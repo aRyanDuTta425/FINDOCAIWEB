@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { analyzeDocument } from '@/lib/gemini'
+import { analyzeDocument } from '@/lib/document-analysis'
 
 // Add GET endpoint to retrieve analysis results
 export async function GET(request: NextRequest) {
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Perform analysis using Gemini API (or mock implementation)
+    // Perform analysis using Groq API (or mock implementation)
     const analysisResult = await analyzeDocument(
       document.ocrData.text,
       document.originalName

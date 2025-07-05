@@ -1,9 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { PrismaClient } from '@prisma/client';
 import { ragService, SearchResult } from './rag-service';
 
 const prisma = new PrismaClient();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY!,
+});
 
 export interface ChatMessage {
   id?: string;
@@ -32,15 +34,6 @@ export interface ChatResponse {
 }
 
 export class ChatService {
-  private model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.0-flash-exp',
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.9,
-      maxOutputTokens: 2048,
-    },
-  });
-
   /**
    * Process a user query and generate a response using RAG
    */
@@ -56,12 +49,28 @@ export class ChatService {
       // Generate context from search results
       const context = ragService.generateContext(searchResults);
       
-      // Create the prompt for Gemini
+      // Create the prompt for Groq
       const prompt = this.createRAGPrompt(query, context, searchResults);
       
-      // Generate response using Gemini
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      // Generate response using Groq
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are FinDocAI, a helpful financial document assistant that analyzes uploaded financial documents including invoices, bank statements, tax documents, and receipts.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        model: 'llama-3.1-70b-versatile', // You can also use 'mixtral-8x7b-32768' or other Groq models
+        temperature: 0.7,
+        max_tokens: 2048,
+        top_p: 0.9,
+      });
+      
+      const response = completion.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response. Please try again.';
       
       // Create citations from search results
       const citations = await this.createCitations(searchResults);
@@ -100,7 +109,7 @@ export class ChatService {
     
     if (!hasRelevantData) {
       return `
-You are FinDocAI, a helpful financial document assistant. The user asked: "${query}"
+The user asked: "${query}"
 
 However, I couldn't find relevant information in their uploaded documents to answer this question.
 
@@ -114,8 +123,6 @@ Keep your response friendly and helpful.
     }
 
     return `
-You are FinDocAI, a helpful financial document assistant that analyzes uploaded financial documents including invoices, bank statements, tax documents, and receipts.
-
 USER QUERY: "${query}"
 
 RELEVANT CONTEXT FROM USER'S DOCUMENTS:
