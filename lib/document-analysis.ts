@@ -244,7 +244,7 @@ export const analyzeDocument = async (ocrText: string, filename: string): Promis
               content: prompt
             }
           ],
-          model: 'llama-3.1-70b-versatile',
+          model: 'llama3-8b-8192',
           temperature: 0.1, // Low temperature for more consistent structured output
           max_tokens: 2048,
         });

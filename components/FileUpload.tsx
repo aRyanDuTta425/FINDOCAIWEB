@@ -2,15 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import dynamic from 'next/dynamic'
+import { Upload, X, FileText, Image, AlertCircle } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils'
-
-// Dynamic imports for lucide-react icons
-const Upload = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Upload })), { ssr: false })
-const X = dynamic(() => import('lucide-react').then(mod => ({ default: mod.X })), { ssr: false })
-const FileText = dynamic(() => import('lucide-react').then(mod => ({ default: mod.FileText })), { ssr: false })
-const Image = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Image })), { ssr: false })
-const AlertCircle = dynamic(() => import('lucide-react').then(mod => ({ default: mod.AlertCircle })), { ssr: false })
 
 interface FileUploadProps {
   onSuccess: (document: any) => void

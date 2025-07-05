@@ -99,7 +99,12 @@ export default function ChatPage() {
       const data = await response.json();
       
       if (data.success) {
-        setMessages(data.data.messages);
+        // Convert timestamp strings back to Date objects
+        const messagesWithDates = data.data.messages.map((msg: any) => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : undefined
+        }));
+        setMessages(messagesWithDates);
         setCurrentConversation(conversationId);
       }
     } catch (error) {
@@ -408,7 +413,10 @@ export default function ChatPage() {
 
                 {message.timestamp && (
                   <div className="mt-2 text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
+                    {message.timestamp instanceof Date 
+                      ? message.timestamp.toLocaleTimeString()
+                      : new Date(message.timestamp).toLocaleTimeString()
+                    }
                   </div>
                 )}
               </div>

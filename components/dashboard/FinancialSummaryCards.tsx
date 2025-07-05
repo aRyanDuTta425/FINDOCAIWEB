@@ -1,16 +1,15 @@
 'use client'
 
 import React from 'react'
-import dynamic from 'next/dynamic'
-
-// Dynamically import lucide icons to avoid webpack issues
-const TrendingUp = dynamic(() => import('lucide-react').then(mod => ({ default: mod.TrendingUp })), { ssr: false })
-const TrendingDown = dynamic(() => import('lucide-react').then(mod => ({ default: mod.TrendingDown })), { ssr: false })
-const DollarSign = dynamic(() => import('lucide-react').then(mod => ({ default: mod.DollarSign })), { ssr: false })
-const PiggyBank = dynamic(() => import('lucide-react').then(mod => ({ default: mod.PiggyBank })), { ssr: false })
-const AlertCircle = dynamic(() => import('lucide-react').then(mod => ({ default: mod.AlertCircle })), { ssr: false })
-const ArrowUpRight = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ArrowUpRight })), { ssr: false })
-const ArrowDownRight = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ArrowDownRight })), { ssr: false })
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  PiggyBank, 
+  AlertCircle, 
+  ArrowUpRight, 
+  ArrowDownRight 
+} from 'lucide-react'
 
 interface FinancialData {
   healthScore: number

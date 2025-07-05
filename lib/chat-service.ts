@@ -43,6 +43,10 @@ export class ChatService {
     conversationId?: string
   ): Promise<ChatResponse> {
     try {
+      console.log('🔍 Processing chat query:', query.substring(0, 50) + '...');
+      console.log('🔑 API Key available:', !!process.env.GROQ_API_KEY);
+      console.log('🔑 API Key starts with:', process.env.GROQ_API_KEY?.substring(0, 7) || 'NONE');
+      
       // Search for relevant content using RAG
       const searchResults = await ragService.searchSimilarContent(query, 10, userId);
       
@@ -51,6 +55,8 @@ export class ChatService {
       
       // Create the prompt for Groq
       const prompt = this.createRAGPrompt(query, context, searchResults);
+      
+      console.log('🤖 Sending request to Groq API...');
       
       // Generate response using Groq
       const completion = await groq.chat.completions.create({
@@ -64,7 +70,7 @@ export class ChatService {
             content: prompt
           }
         ],
-        model: 'llama-3.1-70b-versatile', // You can also use 'mixtral-8x7b-32768' or other Groq models
+        model: 'llama3-8b-8192', // Updated to a stable, supported model
         temperature: 0.7,
         max_tokens: 2048,
         top_p: 0.9,
@@ -97,6 +103,11 @@ export class ChatService {
       
     } catch (error) {
       console.error('Error processing chat query:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined
+      });
       throw new Error('Failed to process query');
     }
   }
