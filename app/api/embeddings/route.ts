@@ -3,6 +3,8 @@ import { ragService } from '@/lib/rag-service';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
+export const dynamic = 'force-dynamic'
+
 const prisma = new PrismaClient();
 
 // Helper function to get user from token

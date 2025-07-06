@@ -3,6 +3,8 @@ import { getUserFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { analyzeDocument } from '@/lib/document-analysis'
 
+export const dynamic = 'force-dynamic'
+
 // Add GET endpoint to retrieve analysis results
 export async function GET(request: NextRequest) {
   try {

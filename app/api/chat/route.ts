@@ -3,6 +3,8 @@ import { chatService } from '@/lib/chat-service';
 import { ragService } from '@/lib/rag-service';
 import jwt from 'jsonwebtoken';
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to get user from token
 async function getUserFromToken(request: NextRequest) {
   try {

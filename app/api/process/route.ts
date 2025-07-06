@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { performOCR, performOCROnPDF } from '@/lib/ocr'
 import { analyzeDocument } from '@/lib/document-analysis'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Batch processes a document for both OCR and analysis in one request
  */

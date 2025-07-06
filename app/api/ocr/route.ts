@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { performOCR, performOCROnPDF } from '@/lib/ocr'
 import { ragService } from '@/lib/rag-service'
 
+export const dynamic = 'force-dynamic'
+
 // Add GET endpoint to retrieve OCR data
 export async function GET(request: NextRequest) {
   try {

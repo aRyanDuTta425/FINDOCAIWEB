@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import { ragService } from '@/lib/rag-service'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     // Get user from JWT token
