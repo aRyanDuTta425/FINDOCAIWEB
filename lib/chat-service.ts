@@ -3,9 +3,20 @@ import { PrismaClient } from '@prisma/client';
 import { ragService, SearchResult } from './rag-service';
 
 const prisma = new PrismaClient();
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+
+// Lazy initialization of Groq client
+let groqClient: Groq | null = null;
+
+function getGroqClient(): Groq {
+  if (!groqClient) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY environment variable is not set');
+    }
+    groqClient = new Groq({ apiKey });
+  }
+  return groqClient;
+}
 
 export interface ChatMessage {
   id?: string;
@@ -59,6 +70,7 @@ export class ChatService {
       console.log('🤖 Sending request to Groq API...');
       
       // Generate response using Groq
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         messages: [
           {

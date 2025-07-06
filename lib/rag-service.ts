@@ -3,9 +3,20 @@ import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+
+// Lazy initialization of Groq client
+let groqClient: Groq | null = null;
+
+function getGroqClient(): Groq {
+  if (!groqClient) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY environment variable is not set');
+    }
+    groqClient = new Groq({ apiKey });
+  }
+  return groqClient;
+}
 
 export interface EmbeddingChunk {
   content: string;
