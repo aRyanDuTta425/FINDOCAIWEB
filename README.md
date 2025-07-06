@@ -11,7 +11,7 @@
 
 🚀 **Transform your financial documents into actionable insights with AI-powered intelligence** �
 
-[Live Demo](https://your-netlify-url.netlify.app) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
+[Live Demo](https://findocai.netlify.app/) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
 
 ![FinDocAI Banner](https://via.placeholder.com/800x400/1e293b/ffffff?text=FinDocAI+Dashboard)
 
