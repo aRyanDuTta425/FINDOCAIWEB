@@ -1,0 +1,6 @@
+tests/
+node_modules/
+.env*
+!.env.example
+.next/
+.vercel/

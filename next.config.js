@@ -5,6 +5,7 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['tesseract.js', 'canvas'],
+    webpackBuildWorker: true,
   },
   webpack: (config, { isServer }) => {
     // Allow WebAssembly
@@ -26,18 +27,6 @@ const nextConfig = {
       'framer-motion': require.resolve('framer-motion'),
     };
 
-    // Add specific module resolution to prevent circular dependency issues
-    config.resolve.modules = [
-      'node_modules',
-      ...config.resolve.modules || []
-    ];
-
-    // Ensure ESM compatibility
-    config.resolve.extensionAlias = {
-      ...config.resolve.extensionAlias,
-      '.js': ['.js', '.jsx', '.ts', '.tsx'],
-    };
-
     // Add fallback for Node.js modules in browser
     if (!isServer) {
       config.resolve.fallback = {
@@ -50,6 +39,10 @@ const nextConfig = {
 
     return config;
   },
+  // Optimize for Vercel deployment
+  output: 'standalone',
+  poweredByHeader: false,
+  trailingSlash: false,
 }
 
 module.exports = nextConfig
