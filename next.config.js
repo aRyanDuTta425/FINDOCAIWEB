@@ -5,7 +5,8 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['tesseract.js', 'canvas'],
-    webpackBuildWorker: true,
+    // Temporarily disable webpackBuildWorker to fix build issues
+    // webpackBuildWorker: true,
   },
   webpack: (config, { isServer }) => {
     // Allow WebAssembly
@@ -19,13 +20,6 @@ const nextConfig = {
       test: /\.wasm$/,
       type: 'webassembly/async',
     });
-
-    // Fix module resolution for problematic packages
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'lucide-react': require.resolve('lucide-react'),
-      'framer-motion': require.resolve('framer-motion'),
-    };
 
     // Add fallback for Node.js modules in browser
     if (!isServer) {
