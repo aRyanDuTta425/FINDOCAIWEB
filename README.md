@@ -70,7 +70,41 @@
 
 ---
 
-## 🛠️ Tech Stack
+## � Application Screenshots
+
+<div align="center">
+
+### 🏠 **Homepage**
+*Clean and professional landing page showcasing FinDocAI's capabilities*
+
+![Homepage](./public/home.png)
+
+---
+
+### 📊 **Dashboard Overview**
+*Comprehensive document management with intuitive navigation*
+
+![Dashboard 1](./public/dashboard1.png)
+
+---
+
+### 📈 **Financial Analytics**
+*Advanced financial insights and document analysis*
+
+![Dashboard 2](./public/dashboard2.png)
+
+---
+
+### 💬 **AI Chat Interface**
+*Interactive chat for document queries and financial assistance*
+
+![Chat Interface](./public/chat.png)
+
+</div>
+
+---
+
+## �🛠️ Tech Stack
 
 <div align="center">
 
