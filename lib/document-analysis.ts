@@ -1,8 +1,22 @@
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+// Lazy initialization of Groq client to handle missing API key gracefully
+let groqClient: Groq | null = null;
+
+const getGroqClient = (): Groq | null => {
+  if (!process.env.GROQ_API_KEY) {
+    console.log('GROQ_API_KEY not found, using fallback analysis');
+    return null;
+  }
+  
+  if (!groqClient) {
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
+  
+  return groqClient;
+};
 
 export interface AnalysisResult {
   documentType: string
@@ -226,7 +240,8 @@ export const analyzeDocument = async (ocrText: string, filename: string): Promis
     
     // Try to use Groq API
     try {
-      if (process.env.GROQ_API_KEY) {
+      const groq = getGroqClient();
+      if (groq) {
         console.log('Using Groq API for document analysis')
         
         // Build the prompt based on document type
