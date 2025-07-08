@@ -11,7 +11,7 @@
 
 🚀 **Transform your financial documents into actionable insights with AI-powered intelligence** �
 
-[Live Demo](https://findocai.netlify.app/) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
+[Live Demo](findocai.vercel.app) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
 
  
 
@@ -286,20 +286,6 @@ POST /api/analyze         # AI analysis
 
 ---
 
-## 🌐 Deployment
-
-### 🔥 Netlify (Recommended)
-
-```bash
-# 1. Build the project
-npm run build
-
-# 2. Deploy to Netlify
-# - Connect your GitHub repository
-# - Set environment variables in Netlify dashboard
-# - Deploy automatically on git push
-```
-
 ### 🐳 Docker Deployment
 
 ```dockerfile
@@ -389,7 +375,7 @@ git push origin feature/amazing-feature
 
 [![GitHub Issues](https://img.shields.io/badge/GitHub-Issues-red?style=for-the-badge&logo=github)](https://github.com/aRyanDuTta425/FINDOCAIWEB/issues)
 [![Documentation](https://img.shields.io/badge/📚-Documentation-blue?style=for-the-badge)](#-documentation)
-[![Discord](https://img.shields.io/badge/Discord-Community-purple?style=for-the-badge&logo=discord)](https://discord.gg/your-discord)
+ 
 
 **Response Time**: Usually within 24 hours
 **Support Hours**: Monday - Friday, 9 AM - 6 PM EST
