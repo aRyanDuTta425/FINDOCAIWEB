@@ -11,7 +11,7 @@
 
 🚀 **Transform your financial documents into actionable insights with AI-powered intelligence** �
 
-[Live Demo](findocai.vercel.app) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
+[Live Demo](https://findocai.vercel.app/) • [Documentation](#-documentation) • [Installation](#-quick-start) • [Contributing](#-contributing)
 
  
 
